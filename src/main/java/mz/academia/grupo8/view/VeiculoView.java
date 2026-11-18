@@ -85,12 +85,12 @@ public class VeiculoView extends JFrame {
         formulario.add(new JLabel("Código do Proprietário:"));
         formulario.add(campoProprietario);
 
-        principal.add(formulario, BorderLayout.CENTER);
         // Painel dos botões
         JPanel painelBotoes = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 10));
         painelBotoes.setBackground(new Color(245, 247, 250));
 
         JButton botaoRegistar = new JButton("Registar");
+        botaoRegistar.addActionListener(e -> registarVeiculo());
         JButton botaoActualizar = new JButton("Actualizar");
         JButton botaoRemover = new JButton("Remover");
         JButton botaoLimpar = new JButton("Limpar");
@@ -126,6 +126,41 @@ public class VeiculoView extends JFrame {
         tabela.getTableHeader().setFont(
                 new Font("Arial", Font.BOLD, 13)
         );
+        // Permitir seleccionar apenas um veículo
+        tabela.setSelectionMode(
+                ListSelectionModel.SINGLE_SELECTION
+        );
+
+// Detectar a selecção de uma linha
+        tabela.getSelectionModel().addListSelectionListener(e -> {
+
+            if (!e.getValueIsAdjusting()) {
+
+                int linha = tabela.getSelectedRow();
+
+                if (linha != -1) {
+
+                    String matricula = tabela.getValueAt(
+                            linha, 0
+                    ).toString();
+
+                    Veiculo veiculo =
+                            veiculoService.procurarPorMatricula(matricula);
+
+                    if (veiculo != null) {
+
+                        campoMatricula.setText(veiculo.getMatricula());
+                        campoMarca.setText(veiculo.getMarca());
+                        campoModelo.setText(veiculo.getModelo());
+                        campoCor.setText(veiculo.getCor());
+
+                        campoProprietario.setText(
+                                veiculo.getProprietario().getCodigo()
+                        );
+                    }
+                }
+            }
+        });
 
 // Scroll da tabela
         JScrollPane scroll = new JScrollPane(tabela);
@@ -145,12 +180,108 @@ public class VeiculoView extends JFrame {
         divisao.setOneTouchExpandable(true);
         divisao.setContinuousLayout(true);
 
+        principal.add(divisao, BorderLayout.CENTER);
+
 // Adicionar ao painel principal
 
         setContentPane(principal);
     }
 
     private void carregarTabela() {
-        // A tabela será carregada nesta etapa seguinte.
+
+        // Limpar os dados anteriores da tabela
+        modeloTabela.setRowCount(0);
+
+        // Obter todos os veículos registados
+        for (Veiculo veiculo : veiculoService.listarTodos()) {
+
+            // Adicionar os dados do veículo à tabela
+            modeloTabela.addRow(new Object[]{
+                    veiculo.getMatricula(),
+                    veiculo.getMarca(),
+                    veiculo.getModelo(),
+                    veiculo.getCor(),
+                    veiculo.getProprietario().getNome()
+            });
+        }
+    }
+
+    private void registarVeiculo() {
+
+        try {
+
+            // Recolher os dados do formulário
+            String matricula = campoMatricula.getText().trim();
+            String marca = campoMarca.getText().trim();
+            String modelo = campoModelo.getText().trim();
+            String cor = campoCor.getText().trim();
+            String codigoProprietario = campoProprietario.getText().trim();
+
+            // Procurar o proprietário pelo código
+            Utilizador proprietario =
+                    utilizadorService.procurarPorCodigo(codigoProprietario);
+
+            if (proprietario == null) {
+                JOptionPane.showMessageDialog(
+                        this,
+                        "O proprietário indicado não está registado!",
+                        "Erro",
+                        JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            }
+
+            // Criar o veículo
+            Veiculo veiculo = new Veiculo(
+                    matricula,
+                    marca,
+                    modelo,
+                    cor,
+                    proprietario
+            );
+
+            // Registar através do serviço
+            boolean registado = veiculoService.registar(veiculo);
+
+            if (registado) {
+
+                JOptionPane.showMessageDialog(
+                        this,
+                        "Veículo registado com sucesso!"
+                );
+
+                carregarTabela();
+                limparCampos();
+
+            } else {
+
+                JOptionPane.showMessageDialog(
+                        this,
+                        "Não foi possível registar o veículo. Verifique se a matrícula já existe.",
+                        "Erro",
+                        JOptionPane.ERROR_MESSAGE
+                );
+            }
+
+        } catch (IllegalArgumentException erro) {
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    erro.getMessage(),
+                    "Dados inválidos",
+                    JOptionPane.ERROR_MESSAGE
+            );
+        }
+    }
+
+    private void limparCampos() {
+
+        campoMatricula.setText("");
+        campoMarca.setText("");
+        campoModelo.setText("");
+        campoCor.setText("");
+        campoProprietario.setText("");
+
+        campoMatricula.requestFocus();
     }
 }

@@ -3,6 +3,7 @@ package mz.academia.grupo8.view;
 
 import mz.academia.grupo8.service.*;
 import mz.academia.grupo8.persistence.SistemaPersistencia;
+import mz.academia.grupo8.view.LugarView;
 
 import javax.swing.*;
 import java.awt.*;
@@ -141,7 +142,44 @@ public class DashboardView extends JFrame {
 
                     janela.setVisible(true);
                 }
+                else if (opcao.equals("Lugares")) {
+                    LugarView janela = new LugarView(lugarService);
+                    janela.setVisible(true);
+                }
 
+
+                else if (opcao.equals("Estacionamento")) {
+
+                    EstacionamentoView janela = new EstacionamentoView(
+                            estacionamentoService,
+                            utilizadorService,
+                            veiculoService,
+                            lugarService
+                    );
+
+                    janela.setVisible(true);
+                }
+
+                else if (opcao.equals("Histórico")) {
+
+                    HistoricoView janela = new HistoricoView(
+                            estacionamentoService
+                    );
+
+                    janela.setVisible(true);
+                }
+
+                else if (opcao.equals("Relatórios")) {
+
+                    RelatorioView janela = new RelatorioView(
+                            utilizadorService,
+                            veiculoService,
+                            lugarService,
+                            estacionamentoService
+                    );
+
+                    janela.setVisible(true);
+                }
             });
 
             botao.setMaximumSize(new Dimension(220, 45));
